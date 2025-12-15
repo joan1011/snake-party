@@ -44,7 +44,7 @@ export const GameBoard = memo(function GameBoard({
         return (
           <div
             key={index}
-            className="absolute transition-all duration-75"
+            className="absolute"
             style={{
               left: segment.x * cellSize + 1,
               top: segment.y * cellSize + 1,
