@@ -1,0 +1,380 @@
+openapi: 3.0.3
+info:
+  title: Snake Party API
+  description: API for the Snake Party game including auth, leaderboards, and spectator features.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        highScore:
+          type: integer
+        gamesPlayed:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - username
+        - email
+        - highScore
+        - gamesPlayed
+        - createdAt
+
+    GameMode:
+      type: string
+      enum:
+        - pass-through
+        - walls
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+        userId:
+          type: string
+        username:
+          type: string
+        score:
+          type: integer
+        mode:
+          $ref: '#/components/schemas/GameMode'
+        date:
+          type: string
+          format: date
+      required:
+        - rank
+        - userId
+        - username
+        - score
+        - mode
+        - date
+
+    GameResult:
+      type: object
+      properties:
+        score:
+          type: integer
+        mode:
+          $ref: '#/components/schemas/GameMode'
+        duration:
+          type: integer
+      required:
+        - score
+        - mode
+        - duration
+
+    ActivePlayer:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        score:
+          type: integer
+        mode:
+          $ref: '#/components/schemas/GameMode'
+        startedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - username
+        - score
+        - mode
+        - startedAt
+
+paths:
+  # Authentication
+  /auth/login:
+    post:
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+              required:
+                - email
+                - password
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  token:
+                    type: string
+        '401':
+          description: Invalid credentials
+
+  /auth/signup:
+    post:
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+              required:
+                - username
+                - email
+                - password
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+                  token:
+                    type: string
+        '409':
+          description: Username or email already exists
+
+  /auth/logout:
+    post:
+      summary: Logout user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successfully logged out
+
+  /auth/me:
+    get:
+      summary: Get current logged in user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Not authenticated
+    patch:
+      summary: Update user profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+      responses:
+        '200':
+          description: Updated user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  # Leaderboard
+  /leaderboards:
+    get:
+      summary: Get leaderboard entries
+      parameters:
+        - in: query
+          name: mode
+          schema:
+            $ref: '#/components/schemas/GameMode'
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: List of leaderboard entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LeaderboardEntry'
+
+  /leaderboards/scores:
+    post:
+      summary: Submit a game score
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GameResult'
+      responses:
+        '200':
+          description: Score submitted (returns entry if high score)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardEntry'
+        '204':
+          description: Score submitted but did not make leaderboard
+
+  /leaderboards/rank/{userId}:
+    get:
+      summary: Get specific user's rank
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User rank
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rank:
+                    type: integer
+                    nullable: true
+
+  # Spectator
+  /spectator/active:
+    get:
+      summary: Get currently active players
+      responses:
+        '200':
+          description: List of active players
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ActivePlayer'
+
+  /spectator/{playerId}:
+    get:
+      summary: Get live state of a player
+      parameters:
+        - in: path
+          name: playerId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Active player state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivePlayer'
+
+  /spectator/{playerId}/count:
+    get:
+      summary: Get spectator count for a player
+      parameters:
+        - in: path
+          name: playerId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Number of spectators
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+
+  # Stats
+  /stats/user/{userId}:
+    get:
+      summary: Get detailed stats for a user
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User aggregate stats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  highScore:
+                    type: integer
+                  gamesPlayed:
+                    type: integer
+                  averageScore:
+                    type: integer
+
+  /stats/global:
+    get:
+      summary: Get global game statistics
+      responses:
+        '200':
+          description: Global stats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalPlayers:
+                    type: integer
+                  totalGames:
+                    type: integer
+                  highestScore:
+                    type: integer
