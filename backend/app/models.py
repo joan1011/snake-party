@@ -1,62 +1,33 @@
-from pydantic import BaseModel, EmailStr
-from typing import List, Optional
-from datetime import datetime, date
-from enum import Enum
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum as SQLEnum
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+from .database import Base
+from .schemas import GameMode
+import datetime
 
-class GameMode(str, Enum):
-    PASS_THROUGH = "pass-through"
-    WALLS = "walls"
+class User(Base):
+    __tablename__ = "users"
 
-class UserBase(BaseModel):
-    username: str
-    email: EmailStr
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    email = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    high_score = Column(Integer, default=0)
+    games_played = Column(Integer, default=0)
 
-class User(UserBase):
-    id: str
-    highScore: int
-    gamesPlayed: int
-    createdAt: datetime
+    # Relationships
+    games = relationship("Game", back_populates="user")
 
-class UserCreate(UserBase):
-    password: str
+class Game(Base):
+    __tablename__ = "games"
 
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    score = Column(Integer)
+    mode = Column(String) # Storing info as string from GameMode enum
+    duration = Column(Integer)
+    played_at = Column(DateTime(timezone=True), server_default=func.now())
 
-class AuthResponse(BaseModel):
-    user: User
-    token: str
-
-class LeaderboardEntry(BaseModel):
-    rank: int
-    userId: str
-    username: str
-    score: int
-    mode: GameMode
-    date: date
-
-class GameResult(BaseModel):
-    score: int
-    mode: GameMode
-    duration: int
-
-class ActivePlayer(BaseModel):
-    id: str
-    username: str
-    score: int
-    mode: GameMode
-    startedAt: datetime
-
-class SpectatorCount(BaseModel):
-    count: int
-
-class UserStats(BaseModel):
-    highScore: int
-    gamesPlayed: int
-    averageScore: int
-
-class GlobalStats(BaseModel):
-    totalPlayers: int
-    totalGames: int
-    highestScore: int
+    # Relationships
+    user = relationship("User", back_populates="games")

@@ -1,22 +1,22 @@
-from fastapi.testclient import TestClient
-from app.main import app
 import pytest
+from httpx import AsyncClient
 
-client = TestClient(app)
-
-def test_read_main():
-    response = client.get("/docs")
+@pytest.mark.asyncio
+async def test_read_main(client: AsyncClient):
+    response = await client.get("/")
     assert response.status_code == 200
+    assert response.json() == {"message": "Welcome to Snake Party API", "docs": "/docs"}
 
-def test_auth_flow():
+@pytest.mark.asyncio
+async def test_auth_flow(client: AsyncClient):
     # 1. Signup
     signup_payload = {
         "username": "testuser",
         "email": "test@example.com",
         "password": "securepassword"
     }
-    response = client.post("/auth/signup", json=signup_payload)
-    assert response.status_code == 201
+    response = await client.post("/api/auth/signup", json=signup_payload)
+    assert response.status_code == 201, response.text
     data = response.json()
     assert data["user"]["username"] == "testuser"
     assert "token" in data
@@ -27,29 +27,31 @@ def test_auth_flow():
         "email": "test@example.com",
         "password": "securepassword"
     }
-    response = client.post("/auth/login", json=login_payload)
+    response = await client.post("/api/auth/login", json=login_payload)
     assert response.status_code == 200
     assert "token" in response.json()
     
     # 3. Get Me
     headers = {"Authorization": f"Bearer {token}"}
-    response = client.get("/auth/me", headers=headers)
+    response = await client.get("/api/auth/me", headers=headers)
     assert response.status_code == 200
     assert response.json()["email"] == "test@example.com"
 
-def test_leaderboard():
-    response = client.get("/leaderboards")
+@pytest.mark.asyncio
+async def test_leaderboard(client: AsyncClient):
+    response = await client.get("/api/leaderboards")
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
-def test_submit_score():
+@pytest.mark.asyncio
+async def test_submit_score(client: AsyncClient):
     # Setup user
     signup_payload = {
         "username": "scoreuser",
         "email": "score@example.com",
         "password": "pass"
     }
-    r = client.post("/auth/signup", json=signup_payload)
+    r = await client.post("/api/auth/signup", json=signup_payload)
     token = r.json()["token"]
     headers = {"Authorization": f"Bearer {token}"}
     
@@ -59,15 +61,15 @@ def test_submit_score():
         "mode": "walls",
         "duration": 120
     }
-    response = client.post("/leaderboards/scores", json=score_payload, headers=headers)
+    response = await client.post("/api/leaderboards/scores", json=score_payload, headers=headers)
     assert response.status_code == 200
     data = response.json()
     assert data["score"] == 5000
     assert data["username"] == "scoreuser"
 
-def test_stats():
-    response = client.get("/stats/global")
+@pytest.mark.asyncio
+async def test_stats(client: AsyncClient):
+    response = await client.get("/api/stats/global")
     assert response.status_code == 200
     data = response.json()
     assert "totalPlayers" in data
-
