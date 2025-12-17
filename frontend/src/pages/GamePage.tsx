@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import { useRef, useEffect } from 'react';
+import { toast } from 'sonner';
+import { leaderboardApi } from '@/services/api';
 import { useSnakeGame } from '@/hooks/useSnakeGame';
 import { GameBoard } from '@/components/game/GameBoard';
 import { GameStats } from '@/components/game/GameStats';
@@ -11,6 +13,47 @@ import { Play, Pause, RotateCcw } from 'lucide-react';
 export function GamePage() {
   const { gameState, start, pause, reset, setMode, changeDirection } = useSnakeGame();
   const isMobile = useIsMobile();
+
+  const startTimeRef = useRef<number>(0);
+  const submittedRef = useRef<boolean>(false);
+
+  // Track game duration
+  useEffect(() => {
+    if (gameState.status === 'playing') {
+      if (startTimeRef.current === 0) {
+        startTimeRef.current = Date.now();
+      }
+      submittedRef.current = false;
+    } else if (gameState.status === 'idle') {
+      startTimeRef.current = 0;
+      submittedRef.current = false;
+    }
+  }, [gameState.status]);
+
+  // Submit score on game over
+  useEffect(() => {
+    const submitScore = async () => {
+      if (gameState.status === 'game-over' && !submittedRef.current && gameState.score > 0) {
+        const duration = Math.max(1, Math.floor((Date.now() - startTimeRef.current) / 1000));
+        submittedRef.current = true;
+        startTimeRef.current = 0;
+
+        try {
+          await leaderboardApi.submitScore({
+            score: gameState.score,
+            mode: gameState.mode,
+            duration
+          });
+          toast.success('Score submitted to leaderboard!');
+        } catch (error) {
+          console.error('Failed to submit score:', error);
+          toast.error('Failed to save score');
+        }
+      }
+    };
+
+    submitScore();
+  }, [gameState.status, gameState.score, gameState.mode]);
 
   const isPlaying = gameState.status === 'playing';
   const isPaused = gameState.status === 'paused';
