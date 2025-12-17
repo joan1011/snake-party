@@ -1,0 +1,25 @@
+databases:
+  # PostgreSQL Database
+  - name: snake-party-db
+    plan: free
+    databaseName: snakedb
+    user: user
+    region: oregon
+
+services:
+  # Web Service (Frontend + Backend)
+  - type: web
+    name: snake-party
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    envVars:
+      # DATABASE_URL is automatically provided by Render from the database
+      # start.sh will transform it from postgresql:// to postgresql+asyncpg://
+      - key: DATABASE_URL
+        fromDatabase:
+          name: snake-party-db
+          property: connectionString
+    healthCheckPath: /api/health
+    autoDeploy: true

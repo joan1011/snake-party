@@ -9,14 +9,14 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d snakedb"]
+      test: [ "CMD-SHELL", "pg_isready -U user -d snakedb" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  backend:
+  app:
     build:
-      context: ./backend
+      context: .
       dockerfile: Dockerfile
     depends_on:
       db:
@@ -24,15 +24,6 @@ services:
     environment:
       # Use the docker service name 'db' as hostname
       DATABASE_URL: postgresql+asyncpg://user:password@db/snakedb
-    ports:
-      - "8000:8000"
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    depends_on:
-      - backend
     ports:
       - "80:80"
 

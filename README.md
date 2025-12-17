@@ -34,6 +34,24 @@ To stop running containers:
 docker compose down
 ```
 
+## Deployment
+
+Deploy to the cloud with Render:
+
+📘 **[Quick Deploy Guide](./DEPLOY.md)** - One-click deployment with `render.yaml`
+
+📘 **[Detailed Deployment Guide](./RENDER_DEPLOYMENT.md)** - Step-by-step manual setup
+
+### Deploy Now
+1. Push your code to GitHub
+2. Go to [Render Dashboard](https://dashboard.render.com/)
+3. Click **"New +"** → **"Blueprint"**
+4. Connect your repository
+5. Click **"Apply"**
+
+Your app will be live in minutes! 🚀
+
 ## Development
 
 For local development without Docker, please see [backend/README.md](backend/README.md) and [frontend/README.md](frontend/README.md).
+
