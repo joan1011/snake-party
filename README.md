@@ -34,6 +34,21 @@ To stop running containers:
 docker compose down
 ```
 
+## Testing
+
+Run the test suite to verify everything works:
+
+📘 **[Testing Guide](./TESTING.md)** - Complete testing documentation
+
+**Quick Test:**
+```bash
+# Backend tests (6 tests)
+cd backend && uv run pytest tests/ tests_integration/ -v
+
+# Frontend tests (28 tests)
+cd frontend && npm run test -- --run
+```
+
 ## Deployment
 
 Deploy to the cloud with Render:
@@ -51,7 +66,28 @@ Deploy to the cloud with Render:
 
 Your app will be live in minutes! 🚀
 
+## CI/CD Pipeline
+
+Automated testing and deployment with GitHub Actions:
+
+📘 **[CI/CD Setup Guide](./CI_CD_SETUP.md)** - Complete setup instructions
+
+📘 **[Quick Reference](./CI_CD_QUICK_REF.md)** - Quick setup checklist
+
+**Pipeline Features:**
+- ✅ Automated testing (backend + frontend)
+- ✅ Docker build validation
+- ✅ Automatic deployment to Render on `main` branch
+- ✅ Pull request testing
+
 ## Development
 
 For local development without Docker, please see [backend/README.md](backend/README.md) and [frontend/README.md](frontend/README.md).
 
+## Documentation
+
+- [Testing Guide](./TESTING.md) - Test suite documentation
+- [Deployment Guide](./DEPLOY.md) - Quick deployment reference
+- [Detailed Deployment](./RENDER_DEPLOYMENT.md) - Step-by-step Render setup
+- [CI/CD Setup](./CI_CD_SETUP.md) - GitHub Actions configuration
+- [CI/CD Quick Reference](./CI_CD_QUICK_REF.md) - Quick setup checklist
