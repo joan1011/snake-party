@@ -25,12 +25,13 @@ export const useAuth = create<AuthState>()(
       login: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
         try {
-          const { user, token } = await authApi.login(email, password);
+          const user = await authApi.login(email, password);
+          const token = localStorage.getItem('snake_party_token');
           set({ user, token, isLoading: false });
         } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'Login failed', 
-            isLoading: false 
+          set({
+            error: error instanceof Error ? error.message : 'Login failed',
+            isLoading: false
           });
           throw error;
         }
@@ -39,12 +40,13 @@ export const useAuth = create<AuthState>()(
       signup: async (username: string, email: string, password: string) => {
         set({ isLoading: true, error: null });
         try {
-          const { user, token } = await authApi.signup(username, email, password);
+          const user = await authApi.signup(username, email, password);
+          const token = localStorage.getItem('snake_party_token');
           set({ user, token, isLoading: false });
         } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'Signup failed', 
-            isLoading: false 
+          set({
+            error: error instanceof Error ? error.message : 'Signup failed',
+            isLoading: false
           });
           throw error;
         }

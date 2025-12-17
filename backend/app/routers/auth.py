@@ -30,8 +30,14 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 
 @router.post("/login", response_model=AuthResponse)
 def login(creds: UserLogin):
+    print(f"DEBUG: Login attempt for {creds.email}")
     with db.lock:
         user = next((u for u in db.users if u["email"] == creds.email), None)
+        if user:
+            print(f"DEBUG: Found user: {user['email']}, stored_password: {user['password']}, input_password: {creds.password}")
+        else:
+            print(f"DEBUG: User not found for email: {creds.email}")
+            
         if not user or user["password"] != creds.password:
              raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid credentials")
         
